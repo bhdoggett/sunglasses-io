@@ -1,23 +1,17 @@
-swagger: "2.0"
+swagger: "3.0.0"
 info:
   version: "1.0.0"
   title: "E-Commerce API"
   description: "API for managing brands, products, and user cart"
-host: "localhost:3000"
-schemes:
-  - "http"
-basePath: "/api"
-produces:
-  - "application/json"
 servers:
   - url: https://petstore3.swagger.io/api/v3
 tags:
-  - name: sunglasses
-    description: awesome sunglasses you can buy
-  - name: store
-    description: Access to sunglass store orders
   - name: user
     description: Operations about user
+  - name: products
+    description: Operations related to products
+  - name: cart
+    description: Operations related to the shopping cart
 paths:
   /api/login:
     post:
@@ -126,383 +120,84 @@ paths:
           schema:
             type: string
             example: "3"
+        - name: accessToken
+          in: query
+          description: accessToken granted to user upon login
+          required: true
+          schema:
+            type: string
+            example: "9uf87h6sjjkf97f"
       response:
         "200":
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/ApiResponse"
         "400":
           description: Invalid product ID
-        
-
-
-    post:
-      tags:
-        - pet
-      summary: Updates a pet in the store with form data
-      description: ""
-      operationId: updatePetWithForm
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet that needs to be updated
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: name
-          in: query
-          description: Name of pet that needs to be updated
-          schema:
-            type: string
-        - name: status
-          in: query
-          description: Status of pet that needs to be updated
-          schema:
-            type: string
-      responses:
-        "400":
-          description: Invalid input
+        "401":
+          description: Unauthorized to add items to shopping cart. Log in first.
 
     delete:
       tags:
-        - pet
-      summary: Deletes a pet
-      description: delete a pet
-      operationId: deletePet
+        - cart
+      summary: Delete item from cart
+      description: Delete an item from the cart
+      operationId: deleteItemFromCart
       parameters:
-        - name: api_key
-          in: header
-          description: ""
-          required: false
+        - name: itemId
+          in: path
+          description: ID of the product you want to add to the cart
+          required: true
           schema:
             type: string
-        - name: petId
-          in: path
-          description: Pet id to delete
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "400":
-          description: Invalid pet value
-
-  /pet/{petId}/uploadImage:
-    post:
-      tags:
-        - pet
-      summary: uploads an image
-      description: ""
-      operationId: uploadFile
-      parameters:
-        - name: petId
-          in: path
-          description: ID of pet to update
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: additionalMetadata
+            example: "3"
+        - name: accessToken
           in: query
-          description: Additional Metadata
-          required: false
+          description: accessToken granted to user upon login
+          required: true
           schema:
             type: string
-      requestBody:
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiResponse"
-
-  /store/inventory:
-    get:
-      tags:
-        - store
-      summary: Returns pet inventories by status
-      description: Returns a map of status codes to quantities
-      operationId: getInventory
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: integer
-                  format: int32
-
-  /store/order:
-    post:
-      tags:
-        - store
-      summary: Place an order for a pet
-      description: Place a new order in the store
-      operationId: placeOrder
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Order"
-          application/xml:
-            schema:
-              $ref: "#/components/schemas/Order"
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: "#/components/schemas/Order"
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Order"
-        "400":
-          description: Invalid input
-        "422":
-          description: Validation exception
-  /store/order/{orderId}:
-    get:
-      tags:
-        - store
-      summary: Find purchase order by ID
-      description: For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.
-      operationId: getOrderById
-      parameters:
-        - name: orderId
-          in: path
-          description: ID of order that needs to be fetched
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Order"
-            application/xml:
-              schema:
-                $ref: "#/components/schemas/Order"
-        "400":
-          description: Invalid ID supplied
-        "404":
-          description: Order not found
-    delete:
-      tags:
-        - store
-      summary: Delete purchase order by ID
-      description: For valid response try integer IDs with value < 1000. Anything above 1000 or nonintegers will generate API errors
-      operationId: deleteOrder
-      parameters:
-        - name: orderId
-          in: path
-          description: ID of the order that needs to be deleted
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "400":
-          description: Invalid ID supplied
-        "404":
-          description: Order not found
-  /user:
-    post:
-      tags:
-        - user
-      summary: Create user
-      description: This can only be done by the logged in user.
-      operationId: createUser
-      requestBody:
-        description: Created user object
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/User"
-          application/xml:
-            schema:
-              $ref: "#/components/schemas/User"
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: "#/components/schemas/User"
-      responses:
-        default:
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-            application/xml:
-              schema:
-                $ref: "#/components/schemas/User"
-  /user/createWithList:
-    post:
-      tags:
-        - user
-      summary: Creates list of users with given input array
-      description: Creates list of users with given input array
-      operationId: createUsersWithListInput
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/User"
-      responses:
+            example: "9uf87h6sjjkf97f"
+      response:
         "200":
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-            application/xml:
-              schema:
-                $ref: "#/components/schemas/User"
-        default:
-          description: successful operation
-  /user/login:
-    get:
-      tags:
-        - user
-      summary: Logs user into the system
-      description: ""
-      operationId: loginUser
-      parameters:
-        - name: username
-          in: query
-          description: The user name for login
-          required: false
-          schema:
-            type: string
-        - name: password
-          in: query
-          description: The password for login in clear text
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: successful operation
-          headers:
-            X-Rate-Limit:
-              description: calls per hour allowed by the user
-              schema:
-                type: integer
-                format: int32
-            X-Expires-After:
-              description: date in UTC when token expires
-              schema:
-                type: string
-                format: date-time
-          content:
-            application/xml:
-              schema:
-                type: string
-            application/json:
-              schema:
-                type: string
+                $ref: "#/components/schemas/ApiResponse"
         "400":
-          description: Invalid username/password supplied
-  /user/logout:
+          description: Invalid product ID
+        "401":
+          description: Unauthorized to delete items from shopping cart. Log in first.
+
+  /api/cart:
     get:
       tags:
-        - user
-      summary: Logs out current logged in user session
-      description: ""
-      operationId: logoutUser
-      parameters: []
-      responses:
-        default:
-          description: successful operation
-  /user/{username}:
-    get:
-      tags:
-        - user
-      summary: Get user by user name
-      description: ""
-      operationId: getUserByName
+        - cart
+      summary: Get items from shopping cart
+      description: Retrieve items from the shopping cart for purchase
+      operationId: getCartItems
       parameters:
-        - name: username
-          in: path
-          description: "The name that needs to be fetched. Use user1 for testing. "
+        - name: accessToken
+          in: query
+          description: accessToken granted to user upon login
           required: true
           schema:
             type: string
-      responses:
+            example: "9uf87h6sjjkf97f"
+      response:
         "200":
-          description: successful operation
+          description: Successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-            application/xml:
-              schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/ApiResponse"
         "400":
-          description: Invalid username supplied
-        "404":
-          description: User not found
-    put:
-      tags:
-        - user
-      summary: Update user
-      description: This can only be done by the logged in user.
-      operationId: updateUser
-      parameters:
-        - name: username
-          in: path
-          description: name that need to be deleted
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: Update an existent user in the store
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/User"
-          application/xml:
-            schema:
-              $ref: "#/components/schemas/User"
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: "#/components/schemas/User"
-      responses:
-        default:
-          description: successful operation
-    delete:
-      tags:
-        - user
-      summary: Delete user
-      description: This can only be done by the logged in user.
-      operationId: deleteUser
-      parameters:
-        - name: username
-          in: path
-          description: The name that needs to be deleted
-          required: true
-          schema:
-            type: string
-      responses:
-        "400":
-          description: Invalid username supplied
-        "404":
-          description: User not found
+          description: Error processing request
+        "401":
+          description: No valid access token present
 components:
   schemas:
     Sunglasses:
@@ -527,73 +222,7 @@ components:
           example:
             - "https://example.com/image1.jpg"
             - "https://example.com/image2.jpg"
-    Customer:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 100000
-        username:
-          type: string
-          example: fehguy
-        address:
-          type: array
-          xml:
-            name: addresses
-            wrapped: true
-          items:
-            $ref: "#/components/schemas/Address"
-      xml:
-        name: customer
-    Order:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        petId:
-          type: integer
-          format: int64
-          example: 198772
-        quantity:
-          type: integer
-          format: int32
-          example: 7
-        shipDate:
-          type: string
-          format: date-time
-        status:
-          type: string
-          description: Order Status
-          example: approved
-          enum:
-            - placed
-            - approved
-            - delivered
-        complete:
-          type: boolean
-      xml:
-        name: order
 
-    Address:
-      type: object
-      properties:
-        street:
-          type: string
-          example: 437 Lytton
-        city:
-          type: string
-          example: Palo Alto
-        state:
-          type: string
-          example: CA
-        zip:
-          type: string
-          example: "94301"
-      xml:
-        name: address
     Category:
       type: object
       properties:
@@ -606,89 +235,105 @@ components:
           example: Dogs
       xml:
         name: category
+
     User:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        username:
+        gender:
           type: string
-          example: theUser
-        firstName:
-          type: string
-          example: John
-        lastName:
-          type: string
-          example: James
-        email:
-          type: string
-          example: john@email.com
-        password:
-          type: string
-          example: "12345"
-        phone:
-          type: string
-          example: "12345"
-        userStatus:
-          type: integer
-          description: User Status
-          format: int32
-          example: 1
-        accessToken:
-          type: string
-          example: "8jf9js68"
-      xml:
-        name: user
-    Tag:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-      xml:
-        name: tag
-    Pet:
-      required:
-        - name
-        - photoUrls
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 10
-        name:
-          type: string
-          example: doggie
-        category:
-          $ref: "#/components/schemas/Category"
-        photoUrls:
+          example: "female"
+        cart:
           type: array
-          xml:
-            wrapped: true
           items:
             type: string
-            xml:
-              name: photoUrl
-        tags:
-          type: array
-          xml:
-            wrapped: true
-          items:
-            $ref: "#/components/schemas/Tag"
-        status:
-          type: string
-          description: pet status in the store
-          enum:
-            - available
-            - pending
-            - sold
-      xml:
-        name: pet
+            example:
+              - "3"
+              - "1"
+              - "4"
+        name:
+          type: object
+          properties:
+            title:
+              type: string
+              example: "mrs"
+            first:
+              type: string
+              example: "Suzie"
+            last:
+              type: string
+              example: "Deal"
+        location:
+          type: object
+          properties:
+            street:
+              type: string
+              example: "1365 cool street"
+            city:
+              type: string
+              example: "Coolville"
+            state:
+              type: string
+              example: CO
+            postcode:
+              type: integer
+              format: int64
+              example: 48759
+          email:
+            type: string
+            format: email
+            example: "suzie@cooltown.com"
+          login:
+            type: object
+            properties:
+              username:
+                type: string
+                example: cheetah354
+              password:
+                type: string
+                format: password
+                example: ch33t@zRule!
+              salt:
+                type: string
+                example: "eNuMvema"
+              md5:
+                type: string
+                example: "a8be2a69c8c8j3y4588f4e1a29442dd7"
+              sha1:
+                type: string
+                example: "f9a60bbf8b550c10712e8j3n713784c3ba78a68e"
+              sha256:
+                type: string
+                example: "4dca9535634c102fbadbe9ij55b37cd608f9f3ced9aacf42a5669e5a312690a0"
+          dob:
+            type: string
+            format: date-time
+            example: "1954-10-10 10:47:17"
+          registered:
+            type: string
+            format: date-time
+            example: "2020-08-03 01:12:24"
+          phone:
+            type: string
+            example: "123-456-7890"
+          cell:
+            type: string
+            example: "012-345-6789"
+          picture:
+            type: object
+            properties:
+              large:
+                type: string
+                example: "https://randomuser.me/api/portraits/women/55.jpg"
+              medium:
+                type: string
+                example: "https://randomuser.me/api/portraits/medium/women/55.jpg"
+              thumbnail:
+                type: string
+                example: "https://randomuser.me/api/portraits/thumb/women/55.jpg"
+          nat:
+            type: string
+            example: "IE"
+
     ApiResponse:
       type: object
       properties:
