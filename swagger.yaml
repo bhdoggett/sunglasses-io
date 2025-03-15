@@ -2,21 +2,21 @@ openapi: "3.0.0"
 info:
   version: "1.0.0"
   title: "E-Commerce API"
-  description: "API for managing brands, products, and user cart"
+  description: "API for managing brands, brands, and user cart"
 servers:
   - url: http://localhost:3000
 tags:
-  - name: user
+  - name: login
     description: Operations about user
-  - name: products
-    description: Operations related to products
+  - name: brands
+    description: Operations related to brands
   - name: cart
     description: Operations related to the shopping cart
 paths:
   /api/login:
     post:
       tags:
-        - user
+        - login
       summary: Log in to make purchases
       description: Log in to make purchases
       operationId: login
@@ -42,28 +42,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                type: string
+                example: "9uf87h6sjjkf97f"
         "400":
           description: Invalid username or password supplied
 
   /sunglasses:
     get:
       tags:
-        - products
+        - brands
       summary: Finds sunglasses by query or by brand
       description: Sunglasses can be retrieved based either on a query in the search bar or by selecting a brand name in the side-bar
       operationId: findSunglassesByQuery
       parameters:
         - name: search
           in: query
-          description: Description values that need to be considered in the products filter
+          description: Description values that need to be considered in the brands filter
           required: false
           schema:
             type: string
             default: black
         - name: brand
           in: query
-          description: Brand name to be used in filtering products
+          description: Brand name to be used in filtering brands
           required: false
           schema:
             type: string
@@ -78,12 +79,12 @@ paths:
                 items:
                   $ref: "#/components/schemas/Sunglasses"
         "404":
-          description: No products match the search terms
+          description: No brands match the search terms
 
   /api/sunglasses/{itemId}:
     get:
       tags:
-        - products
+        - brands
       summary: Find sunglasses by ID
       description: Returns a single pair of sunglasses
       operationId: findSunglassesById
