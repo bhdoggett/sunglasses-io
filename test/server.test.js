@@ -46,6 +46,19 @@ describe("Login", () => {
   });
 });
 
-// describe("Brands", () => {});
+describe("Brands", () => {
+  describe("GET /sunglasses/brands", () => {
+    it("Should return an array of sunglasses of a given brand", function (done) {
+      chai
+        .request(server)
+        .get("sunglasses/brands")
+        .end((err, res) => {
+          res.status.should.be(200);
+          res.body.should.be.an("array");
+          res.body.length.should.be;
+        });
+    });
+  });
+});
 
 // describe("Cart", () => {});

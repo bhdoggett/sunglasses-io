@@ -47,28 +47,21 @@ paths:
         "400":
           description: Invalid username or password supplied
 
-  /sunglasses:
+  /sunglasses/brands:
     get:
       tags:
         - brands
-      summary: Finds sunglasses by query or by brand
-      description: Sunglasses can be retrieved based either on a query in the search bar or by selecting a brand name in the side-bar
-      operationId: findSunglassesByQuery
+      summary: Finds sunglasses by brand
+      description: Sunglasses can be retrieved by brand name
+      operationId: findSunglassesByBrand
       parameters:
-        - name: search
-          in: query
-          description: Description values that need to be considered in the brands filter
-          required: false
-          schema:
-            type: string
-            default: black
         - name: brand
           in: query
           description: Brand name to be used in filtering brands
           required: false
           schema:
             type: string
-            default: Oakley
+            default: oakley
       responses:
         "200":
           description: Successful operation
@@ -79,7 +72,33 @@ paths:
                 items:
                   $ref: "#/components/schemas/Sunglasses"
         "404":
-          description: No brands match the search terms
+          description: No brands matcht the query
+  /sunglasses/query:
+    get:
+      tags:
+        - brands
+      summary: Finds sunglasses by query
+      description: Sunglasses can be retrieved by query
+      operationId: findSunglassesByQuery
+      parameters:
+        - name: q
+          in: query
+          description: Description values that need to be considered in the brands filter
+          required: false
+          schema:
+            type: string
+            default: black
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sunglasses"
+        "404":
+          description: No sunglasses match the search terms
 
   /api/sunglasses/{itemId}:
     get:
