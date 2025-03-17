@@ -7,6 +7,7 @@ const swaggerDocument = YAML.load("./swagger.yaml"); // Replace './swagger.yaml'
 const app = express();
 const cors = require("cors");
 const uid = require("rand-token").uid;
+require("dotenv").config();
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -38,14 +39,13 @@ app.post("/api/login", (request, response) => {
       .status(400)
       .json({ message: "Incomplete login information provided" });
   }
-  console.log("Request:", request.body);
+
   const user = users.find((user) => {
     return (
       user.login.username == request.body.username &&
       user.login.password == request.body.password
     );
   });
-  console.log("User:", user);
 
   if (!user) {
     return response.status(401).json({ message: "Invalid login credentials" });
@@ -57,4 +57,32 @@ app.post("/api/login", (request, response) => {
   return response.end(JSON.stringify(accessToken));
 });
 
+app.get("/api/sunglasses/brands", (request, response) => {
+  const brand = request.query.brand;
+  console.log(brand);
+
+  if (!brand) {
+    return response.status(400).json({ message: "Bad request" });
+  }
+
+  const validBrandFromQuery = brands.find(
+    (brandForSearch) => brandForSearch.name === brand
+  );
+
+  if (!validBrandFromQuery) {
+    return response.status(404).json({ message: "Brand not found" });
+  }
+
+  if (validBrandFromQuery) {
+    const categoryId = brands.find(
+      (brandForSearch) => brandForSearch.name === brand
+    ).id;
+
+    const sunglasses = products.filter(
+      (product) => product.categoryId === categoryId
+    );
+
+    return response.status(200).json(sunglasses);
+  }
+});
 module.exports = app;

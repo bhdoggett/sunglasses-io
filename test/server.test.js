@@ -47,15 +47,48 @@ describe("Login", () => {
 });
 
 describe("Brands", () => {
-  describe("GET /sunglasses/brands", () => {
-    it("Should return an array of sunglasses of a given brand", function (done) {
+  describe("GET /api/sunglasses/brands", () => {
+    it("should return an array of sunglasses of a given brand", function (done) {
+      const brand = "Oakley";
+
       chai
         .request(server)
-        .get("sunglasses/brands")
+        .get(`/api/sunglasses/brands?brand=${brand}`)
+        .end((err, res) => {
+          res.status.should.eql(200);
+          res.body.should.be.an("array");
+          res.body.length.should.be.above(0);
+          done();
+        });
+    });
+
+    it("should return a 'Brand not found' error message if the specified brand does not exist", function (done) {
+      const brand = "CoolSunglasses";
+
+      chai
+        .request(server)
+        .get(`/api/sunglasses/brands?brand=${brand}`)
+        .end((err, res) => {
+          res.status.should.eql(404);
+          res.body.message.should.eql("Brand not found");
+          done();
+        });
+    });
+  });
+
+  describe("GET /api/sunglasses/query", () => {
+    it("Should return an array of sunglasses based on a query string", function (done) {
+      const query = "black";
+
+      chai
+        .request(server)
+        .get("/api/sunglasses/brands")
+        .send(query)
         .end((err, res) => {
           res.status.should.be(200);
           res.body.should.be.an("array");
-          res.body.length.should.be;
+          res.body.length.should.be.above(0);
+          done();
         });
     });
   });
