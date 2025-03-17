@@ -48,7 +48,7 @@ describe("Login", () => {
 
 describe("Brands", () => {
   describe("GET /api/sunglasses/brands", () => {
-    it("should return an array of sunglasses of a given brand", function (done) {
+    it("should return an array of sunglasses for a given valid brand", function (done) {
       const brand = "Oakley";
 
       chai
@@ -77,17 +77,29 @@ describe("Brands", () => {
   });
 
   describe("GET /api/sunglasses/query", () => {
-    it("Should return an array of sunglasses based on a query string", function (done) {
+    it("Should return an array of sunglasses based on a valid query string", function (done) {
       const query = "black";
 
       chai
         .request(server)
-        .get("/api/sunglasses/brands")
-        .send(query)
+        .get(`/api/sunglasses/brands?query=${query}`)
         .end((err, res) => {
-          res.status.should.be(200);
+          res.status.should.eql(200);
           res.body.should.be.an("array");
           res.body.length.should.be.above(0);
+          done();
+        });
+    });
+
+    it("Should return a 'No sunglasses match your search' message if the query string cannot be found in the products.name or products.description fields", function (done) {
+      const query = "98jslfj";
+
+      chai
+        .request(server)
+        .get(`/api/sunglasses/brands?query=${query}`)
+        .end((err, res) => {
+          res.status.should.eql(404);
+          res.body.message.should.eql("No sunglasses match your search");
           done();
         });
     });

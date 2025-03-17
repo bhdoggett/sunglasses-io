@@ -59,28 +59,45 @@ app.post("/api/login", (request, response) => {
 
 app.get("/api/sunglasses/brands", (request, response) => {
   const brand = request.query.brand;
+
   console.log(brand);
 
-  if (!brand) {
-    return response.status(400).json({ message: "Bad request" });
-  }
-
-  const validBrandFromQuery = brands.find(
-    (brandForSearch) => brandForSearch.name === brand
-  );
-
-  if (!validBrandFromQuery) {
-    return response.status(404).json({ message: "Brand not found" });
-  }
-
-  if (validBrandFromQuery) {
-    const categoryId = brands.find(
+  if (brand) {
+    const validBrandFromQuery = brands.find(
       (brandForSearch) => brandForSearch.name === brand
-    ).id;
-
-    const sunglasses = products.filter(
-      (product) => product.categoryId === categoryId
     );
+
+    if (!validBrandFromQuery) {
+      return response.status(404).json({ message: "Brand not found" });
+    }
+
+    if (validBrandFromQuery) {
+      const categoryId = brands.find(
+        (brandForSearch) => brandForSearch.name === brand
+      ).id;
+
+      const sunglasses = products.filter(
+        (product) => product.categoryId === categoryId
+      );
+
+      return response.status(200).json(sunglasses);
+    }
+  }
+
+  const query = request.query.query.toLowerCase();
+
+  if (query) {
+    const sunglasses = products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query)
+    );
+
+    if (sunglasses.length === 0) {
+      return response
+        .status(404)
+        .json({ message: "No sunglasses match your search" });
+    }
 
     return response.status(200).json(sunglasses);
   }
