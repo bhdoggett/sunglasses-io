@@ -19,7 +19,7 @@ describe("Login", () => {
         .post("/api/login")
         .send(login)
         .end((err, res) => {
-          res.should.have.status(200);
+          res.status.should.equal(200);
           res.body.should.be.an("object");
           res.body.should.have.property("token");
           res.body.token.should.be.a("string");
@@ -35,11 +35,11 @@ describe("Login", () => {
         .post("/api/login")
         .send(login)
         .end((err, res) => {
-          res.should.have.status(401);
+          res.status.should.equal(401);
           res.body.should.be.an("object");
           res.body.should.have
             .property("message")
-            .eql("Invalid login credentials");
+            .equal("Invalid login credentials");
           done();
         });
     });
@@ -55,7 +55,7 @@ describe("Brands", () => {
         .request(server)
         .get(`/api/sunglasses/brands?brand=${brand}`)
         .end((err, res) => {
-          res.status.should.eql(200);
+          res.status.should.equal(200);
           res.body.should.be.an("array");
           res.body.length.should.be.above(0);
           done();
@@ -69,22 +69,22 @@ describe("Brands", () => {
         .request(server)
         .get(`/api/sunglasses/brands?brand=${brand}`)
         .end((err, res) => {
-          res.status.should.eql(404);
-          res.body.message.should.eql("Brand not found");
+          res.status.should.equal(404);
+          res.body.message.should.equal("Brand not found");
           done();
         });
     });
   });
 
-  describe("GET /api/sunglasses/query", () => {
+  describe("GET /api/sunglasses/search", () => {
     it("Should return an array of sunglasses based on a valid query string", function (done) {
-      const query = "black";
+      const search = "black";
 
       chai
         .request(server)
-        .get(`/api/sunglasses/brands?query=${query}`)
+        .get(`/api/sunglasses/search?search=${search}`)
         .end((err, res) => {
-          res.status.should.eql(200);
+          res.status.should.equal(200);
           res.body.should.be.an("array");
           res.body.length.should.be.above(0);
           done();
@@ -92,18 +92,234 @@ describe("Brands", () => {
     });
 
     it("Should return a 'No sunglasses match your search' message if the query string cannot be found in the products.name or products.description fields", function (done) {
-      const query = "98jslfj";
+      const search = "98jslfj";
 
       chai
         .request(server)
-        .get(`/api/sunglasses/brands?query=${query}`)
+        .get(`/api/sunglasses/search?search=${search}`)
         .end((err, res) => {
-          res.status.should.eql(404);
-          res.body.message.should.eql("No sunglasses match your search");
+          res.status.should.equal(404);
+          res.body.message.should.equal("No sunglasses match your search");
           done();
         });
     });
   });
 });
 
-// describe("Cart", () => {});
+describe("Cart", () => {
+  describe("POST /api/me/cart/:itemId", function () {
+    describe("If the user is authenticated", function (done) {
+      it('should send an "Invalid product id" message for unrecognized product id', function (done) {
+        const login = { username: "yellowleopard753", password: "jonjon" };
+        let validatedUser;
+
+        // log in to receive valid access token
+        chai
+          .request(server)
+          .post("/api/login")
+          .send(login)
+          .end((err, res) => {
+            validatedUser = res.body;
+
+            // send post request to add item to cart
+            chai
+              .request(server)
+              .post("/api/me/cart/0")
+              .set("X-Authentication", validatedUser.token)
+              .end((err, res) => {
+                res.status.should.equal(404);
+                res.body.should.be.an("object");
+                res.body.message.should.equal("Invalid product id");
+              });
+            done();
+          });
+      });
+
+      it("should add a given item to the user's cart", function (done) {
+        const login = { username: "yellowleopard753", password: "jonjon" };
+        let validatedUser;
+
+        // log in to receive valid access token
+        chai
+          .request(server)
+          .post("/api/login")
+          .send(login)
+          .end((err, res) => {
+            validatedUser = res.body;
+
+            // send post request to add item to cart
+            chai
+              .request(server)
+              .post("/api/me/cart/1")
+              .set("X-Authentication", validatedUser.token)
+              .end((err, res) => {
+                res.status.should.equal(200);
+                res.body.should.be.an("object");
+                res.body.message.should.equal("Item 1 added to cart");
+              });
+            done();
+          });
+      });
+    });
+
+    describe("If the user is not authenticated", function () {
+      it("should send a 'Login required to add items to the cart' errormessage", function (done) {
+        // send post request to add item to cart WITHOUT authentication
+        chai
+          .request(server)
+          .post("/api/me/cart/1")
+          .set("X-Authentication", "_NONE_")
+          .end((err, res) => {
+            res.status.should.equal(401);
+            res.body.should.be.an("object");
+            res.body.message.should.equal(
+              "Login requried to add items to cart"
+            );
+            done();
+          });
+      });
+    });
+  });
+
+  describe("DELETE /api/me/cart/:itemId", function () {
+    describe("If the user is authenticated", function () {
+      it("should should send an error message if the item is not in the cart", function (done) {
+        const login = { username: "yellowleopard753", password: "jonjon" };
+        let validatedUser;
+
+        // log in to receive valid access token
+        chai
+          .request(server)
+          .post("/api/login")
+          .send(login)
+          .end((err, res) => {
+            validatedUser = res.body;
+
+            // send post request to add item to cart
+            chai
+              .request(server)
+              .post("/api/me/cart/1")
+              .set("X-Authentication", validatedUser.token)
+              .end((err, res) => {
+                // send delete request to remove item from cart
+                chai
+                  .request(server)
+                  .delete("/api/me/cart/2")
+                  .set("X-Authentication", validatedUser.token)
+                  .end((err, res) => {
+                    res.status.should.equal(404);
+                    res.body.should.be.an("object");
+                    res.body.message.should.equal("Product not found in cart");
+                    done();
+                  });
+              });
+          });
+      });
+
+      it("should should delete a valid item from the user's cart", function (done) {
+        const login = { username: "yellowleopard753", password: "jonjon" };
+        let validatedUser;
+
+        // log in to receive valid access token
+        chai
+          .request(server)
+          .post("/api/login")
+          .send(login)
+          .end((err, res) => {
+            validatedUser = res.body;
+
+            // send post request to add item to cart
+            chai
+              .request(server)
+              .post("/api/me/cart/1")
+              .set("X-Authentication", validatedUser.token)
+              .end((err, res) => {
+                // send delete request to remove item from cart
+                chai
+                  .request(server)
+                  .delete("/api/me/cart/1")
+                  .set("X-Authentication", validatedUser.token)
+                  .end((err, res) => {
+                    res.status.should.equal(200);
+                    res.body.should.be.an("object");
+                    res.body.message.should.equal(
+                      "Item with product id 1 deleted from cart"
+                    );
+                    done();
+                  });
+              });
+          });
+      });
+    });
+
+    describe("If the user is not authenticated", function () {
+      it("should send a 'Login required to delete items from the cart' error message", function (done) {
+        // send post request to add item to cart WITHOUT authentication
+        chai
+          .request(server)
+          .delete("/api/me/cart/1")
+          .set("X-Authentication", "_NONE_")
+          .end((err, res) => {
+            res.status.should.equal(401);
+            res.body.should.be.an("object");
+            res.body.message.should.equal(
+              "Login requried to delete items from cart"
+            );
+            done();
+          });
+      });
+    });
+  });
+
+  describe("GET /api/me/cart", function () {
+    describe("If the user is authenticated", function () {
+      it("should return the user's cart", function (done) {
+        const login = { username: "yellowleopard753", password: "jonjon" };
+        let validatedUser;
+
+        // log in to receive valid access token
+        chai
+          .request(server)
+          .post("/api/login")
+          .send(login)
+          .end((err, res) => {
+            validatedUser = res.body;
+
+            // send post request to add item to cart
+            chai
+              .request(server)
+              .post("/api/me/cart/1")
+              .set("X-Authentication", validatedUser.token)
+              .end((err, res) => {
+                // send delete request to remove item from cart
+                chai
+                  .request(server)
+                  .get("/api/me/cart")
+                  .set("X-Authentication", validatedUser.token)
+                  .end((err, res) => {
+                    res.status.should.equal(200);
+                    res.body.should.be.an("array");
+                    res.body.length.should.be.above(0);
+                    done();
+                  });
+              });
+          });
+      });
+    });
+    describe("If the user is not authenticated", function () {
+      it("should send a 'Login required to access the cart' error message", function (done) {
+        // send post request to add item to cart WITHOUT authentication
+        chai
+          .request(server)
+          .get("/api/me/cart/1")
+          .set("X-Authentication", "_NONE_")
+          .end((err, res) => {
+            res.status.should.equal(401);
+            res.body.should.be.an("object");
+            res.body.message.should.equal("Login requried to access cart");
+            done();
+          });
+      });
+    });
+  });
+});
