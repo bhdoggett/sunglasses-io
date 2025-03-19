@@ -66,8 +66,13 @@ app.post("/api/login", (request, response) => {
 });
 
 app.get("/api/sunglasses/brands", (request, response) => {
-  const brand = request.query.brand;
+  const brand = request.query?.brand;
 
+  if (!brand) {
+    return response
+      .status(400)
+      .json({ message: "Brand name required in query" });
+  }
   if (brand) {
     const validBrandFromQuery = brands.find(
       (brandForSearch) => brandForSearch.name === brand
@@ -90,7 +95,11 @@ app.get("/api/sunglasses/brands", (request, response) => {
 });
 
 app.get("/api/sunglasses/search", (request, response) => {
-  const search = request.query.search.toLowerCase();
+  const search = request.query?.search?.toLowerCase();
+
+  if (!search) {
+    return response.status(400).json({ message: "Search query required" });
+  }
 
   if (search) {
     const sunglasses = products.filter(
@@ -188,8 +197,29 @@ app.delete("/api/me/cart/:itemId", (request, response) => {
       });
     }
   }
+});
 
-  return response.status(404).json({ message: "User not found" });
+app.get("/api/me/cart", (request, response) => {
+  const authToken = request.headers["x-authentication"];
+
+  const currentValidatedUser = validatedUsers.find(
+    (user) => user.token === authToken
+  );
+
+  const elapsedTime = new Date() - currentValidatedUser?.lastUpdated;
+  const isValidToken = elapsedTime < TOKEN_VALIDITY_TIMEOUT;
+
+  if (!isValidToken) {
+    return response.status(401).json({
+      message: "Login requried to view cart",
+    });
+  }
+
+  for (let i = 0; i < users.length; i++) {
+    if (users[i].email === currentValidatedUser.email) {
+      return response.status(200).json(users[i].cart);
+    }
+  }
 });
 
 module.exports = app;

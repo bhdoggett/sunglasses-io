@@ -1,19 +1,15 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
-const server = require("../app/server"); // Adjust the path as needed
-// const randToken = require('rand-token')
+const server = require("../app/server");
 
 chai.should();
 chai.use(chaiHttp);
-
-// TODO: Write tests for the server
 
 describe("Login", () => {
   describe("POST /api/login", function () {
     it("Should return an access token for authentication if login credentials are valid", function (done) {
       const login = { username: "yellowleopard753", password: "jonjon" };
 
-      //arrange
       chai
         .request(server)
         .post("/api/login")
@@ -48,6 +44,18 @@ describe("Login", () => {
 
 describe("Brands", () => {
   describe("GET /api/sunglasses/brands", () => {
+    it("should return a 'Brand name required in query' error message if no brand parameter is present in query", function (done) {
+      chai
+        .request(server)
+        .get("/api/sunglasses/brands?")
+        .end((err, res) => {
+          res.status.should.equal(400);
+          res.body.should.be.an("object");
+          res.body.message.should.equal("Brand name required in query");
+          done();
+        });
+    });
+
     it("should return an array of sunglasses for a given valid brand", function (done) {
       const brand = "Oakley";
 
@@ -77,6 +85,18 @@ describe("Brands", () => {
   });
 
   describe("GET /api/sunglasses/search", () => {
+    it("should return a 'Search query required' error message if no search terms are provided", function (done) {
+      chai
+        .request(server)
+        .get("/api/sunglasses/search?")
+        .end((err, res) => {
+          res.status.should.equal(400);
+          res.body.should.be.an("object");
+          res.body.message.should.equal("Search query required");
+          done();
+        });
+    });
+
     it("Should return an array of sunglasses based on a valid query string", function (done) {
       const search = "black";
 
@@ -300,6 +320,8 @@ describe("Cart", () => {
                     res.status.should.equal(200);
                     res.body.should.be.an("array");
                     res.body.length.should.be.above(0);
+                    res.body[0].should.be.an("object");
+                    res.body[0].name.should.equal("Superglasses");
                     done();
                   });
               });
@@ -308,15 +330,15 @@ describe("Cart", () => {
     });
     describe("If the user is not authenticated", function () {
       it("should send a 'Login required to access the cart' error message", function (done) {
-        // send post request to add item to cart WITHOUT authentication
+        // attempt to retrieve cart WITHOUT authentication
         chai
           .request(server)
-          .get("/api/me/cart/1")
+          .get("/api/me/cart")
           .set("X-Authentication", "_NONE_")
           .end((err, res) => {
             res.status.should.equal(401);
             res.body.should.be.an("object");
-            res.body.message.should.equal("Login requried to access cart");
+            res.body.message.should.equal("Login requried to view cart");
             done();
           });
       });
