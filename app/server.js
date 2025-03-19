@@ -7,7 +7,6 @@ const swaggerDocument = YAML.load("./swagger.yaml"); // Replace './swagger.yaml'
 const app = express();
 const cors = require("cors");
 const uid = require("rand-token").uid;
-require("dotenv").config();
 
 app.use(bodyParser.json());
 app.use(cors());

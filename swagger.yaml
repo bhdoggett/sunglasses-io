@@ -2,14 +2,14 @@ openapi: "3.0.0"
 info:
   version: "1.0.0"
   title: "E-Commerce API"
-  description: "API for managing brands, brands, and user cart"
+  description: "API for managing brands, products, and user cart"
 servers:
   - url: http://localhost:3000
 tags:
   - name: login
-    description: Operations about user
+    description: Operations about user authentication
   - name: brands
-    description: Operations related to brands
+    description: Operations related to sunglasses brands and products
   - name: cart
     description: Operations related to the shopping cart
 paths:
@@ -18,7 +18,7 @@ paths:
       tags:
         - login
       summary: Log in to make purchases
-      description: Log in to make purchases
+      description: Log in to receive an access token for further actions
       operationId: login
       requestBody:
         required: true
@@ -38,187 +38,258 @@ paths:
                   example: $ungl@$$es@r3@wesome!
       responses:
         "200":
-          description: Successful operation
+          description: Successful login
           content:
             application/json:
               schema:
-                type: string
-                example: "9uf87h6sjjkf97f"
+                type: object
+                properties:
+                  name:
+                    type: object
+                    example:
+                      first: Suzie
+                      last: Deal
+                  email:
+                    type: string
+                    example: suzie@cooltown.com
+                  token:
+                    type: string
+                    example: "9uf87h6sjjkf97f"
+                  lastUpdated:
+                    type: string
+                    format: date-time
         "400":
-          description: Invalid username or password supplied
+          description: Incomplete login information provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Incomplete login information provided
+        "401":
+          description: Invalid login credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid login credentials
 
-  /sunglasses/brands:
+  /api/sunglasses/brands:
     get:
       tags:
         - brands
       summary: Finds sunglasses by brand
-      description: Sunglasses can be retrieved by brand name
+      description: Retrieves sunglasses based on a brand name query parameter
       operationId: findSunglassesByBrand
       parameters:
         - name: brand
           in: query
-          description: Brand name to be used in filtering brands
-          required: false
-          schema:
-            type: string
-            default: oakley
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Sunglasses"
-        "404":
-          description: No brands matcht the query
-  /sunglasses/query:
-    get:
-      tags:
-        - brands
-      summary: Finds sunglasses by query
-      description: Sunglasses can be retrieved by query
-      operationId: findSunglassesByQuery
-      parameters:
-        - name: q
-          in: query
-          description: Description values that need to be considered in the brands filter
-          required: false
-          schema:
-            type: string
-            default: black
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Sunglasses"
-        "404":
-          description: No sunglasses match the search terms
-
-  /api/sunglasses/{itemId}:
-    get:
-      tags:
-        - brands
-      summary: Find sunglasses by ID
-      description: Returns a single pair of sunglasses
-      operationId: findSunglassesById
-      parameters:
-        - name: itemId
-          in: path
-          description: ID of sunglasses to return
+          description: Brand name to filter sunglasses
           required: true
           schema:
             type: string
+            example: "Oakley"
       responses:
         "200":
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Sunglasses"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sunglasses"
         "400":
-          description: Invalid item ID
+          description: Brand name required in query
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Brand name required in query
+        "404":
+          description: Brand not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Brand not found
 
-  /api/cart/{itemId}:
+  /api/sunglasses/search:
+    get:
+      tags:
+        - brands
+      summary: Search sunglasses by keyword
+      description: Retrieves sunglasses that match the search query
+      operationId: findSunglassesByQuery
+      parameters:
+        - name: search
+          in: query
+          description: Keyword to search by product name or description
+          required: true
+          schema:
+            type: string
+            example: "black"
+      responses:
+        "200":
+          description: Sunglasses matching search
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sunglasses"
+        "400":
+          description: Search query required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Search query required
+        "404":
+          description: No sunglasses match your search
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: No sunglasses match your search
+
+  /api/me/cart/{itemId}:
     post:
       tags:
         - cart
-      summary: Add items to the cart
-      description: Add items to the cart
+      summary: Add an item to the shopping cart
+      description: Adds a product to the authenticated user's shopping cart
       operationId: addItemToCart
       parameters:
         - name: itemId
           in: path
-          description: ID of the product you want to add to the cart
+          description: Product ID to add to the cart
           required: true
           schema:
             type: string
             example: "3"
-        - name: accessToken
-          in: query
-          description: Access token granted to user upon login
-          required: true
-          schema:
-            type: string
-            example: "9uf87h6sjjkf97f"
+      security:
+        - ApiKeyAuth: []
       responses:
         "200":
-          description: Successful operation
+          description: Item added to cart successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse"
-        "400":
-          description: Invalid product ID
+                $ref: "#/components/schemas/Message"
         "401":
-          description: Unauthorized to add items to shopping cart. Log in first.
+          description: Login required to add items to cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login required to add items to cart
+        "404":
+          description: Invalid product id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid product id
 
     delete:
       tags:
         - cart
       summary: Delete item from cart
-      description: Delete an item from the cart
+      description: Deletes an item from the authenticated user's shopping cart
       operationId: deleteItemFromCart
       parameters:
         - name: itemId
           in: path
-          description: ID of the product you want to delete from the cart
+          description: Product ID to delete from the cart
           required: true
           schema:
             type: string
             example: "3"
-        - name: accessToken
-          in: query
-          description: Access token granted to user upon login
-          required: true
-          schema:
-            type: string
-            example: "9uf87h6sjjkf97f"
+      security:
+        - ApiKeyAuth: []
       responses:
         "200":
-          description: Successful operation
+          description: Item deleted from cart successfully
+        "401":
+          description: Login required to delete items from cart
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse"
-        "400":
-          description: Invalid product ID
-        "401":
-          description: Unauthorized to delete items from shopping cart. Log in first.
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login required to delete items from cart
+        "404":
+          description: Invalid product id or item not found in cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid product id or item not found in cart
 
-  /api/cart:
+  /api/me/cart:
     get:
       tags:
         - cart
       summary: Get items from shopping cart
-      description: Retrieve items from the shopping cart for purchase
+      description: Retrieve items from the authenticated user's shopping cart
       operationId: getCartItems
-      parameters:
-        - name: accessToken
-          in: query
-          description: Access token granted to user upon login
-          required: true
-          schema:
-            type: string
-            example: "9uf87h6sjjkf97f"
+      security:
+        - ApiKeyAuth: []
       responses:
         "200":
-          description: Successful operation
+          description: Cart retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApiResponse"
-        "400":
-          description: Error processing request
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sunglasses"
         "401":
-          description: No valid access token present
+          description: Login required to view cart
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login required to view cart
 
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-authentication
+
   schemas:
     Sunglasses:
       type: object
@@ -243,124 +314,9 @@ components:
             - "https://example.com/image1.jpg"
             - "https://example.com/image2.jpg"
 
-    Category:
+    Message:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-          example: 1
-        name:
-          type: string
-          example: Dogs
-      xml:
-        name: category
-
-    User:
-      type: object
-      properties:
-        gender:
-          type: string
-          example: "female"
-        cart:
-          type: array
-          items:
-            type: string
-          example:
-            - "3"
-            - "1"
-            - "4"
-        name:
-          type: object
-          properties:
-            title:
-              type: string
-              example: "mrs"
-            first:
-              type: string
-              example: "Suzie"
-            last:
-              type: string
-              example: "Deal"
-        location:
-          type: object
-          properties:
-            street:
-              type: string
-              example: "1365 cool street"
-            city:
-              type: string
-              example: "Coolville"
-            state:
-              type: string
-              example: CO
-            postcode:
-              type: integer
-              format: int64
-              example: 48759
-        email:
-          type: string
-          format: email
-          example: "suzie@cooltown.com"
-        login:
-          type: object
-          properties:
-            username:
-              type: string
-              example: cheetah354
-            password:
-              type: string
-              format: password
-              example: ch33t@zRule!
-            salt:
-              type: string
-              example: "eNuMvema"
-            md5:
-              type: string
-              example: "a8be2a69c8c8j3y4588f4e1a29442dd7"
-            sha1:
-              type: string
-              example: "f9a60bbf8b550c10712e8j3n713784c3ba78a68e"
-            sha256:
-              type: string
-              example: "4dca9535634c102fbadbe9ij55b37cd608f9f3ced9aacf42a5669e5a312690a0"
-        dob:
-          type: string
-          format: date-time
-          example: "1954-10-10 10:47:17"
-        registered:
-          type: string
-          format: date-time
-          example: "2020-08-03 01:12:24"
-        phone:
-          type: string
-          example: "123-456-7890"
-        cell:
-          type: string
-          example: "012-345-6789"
-        picture:
-          type: object
-          properties:
-            large:
-              type: string
-              example: "https://randomuser.me/api/portraits/women/55.jpg"
-            medium:
-              type: string
-              example: "https://randomuser.me/api/portraits/medium/women/55.jpg"
-            thumbnail:
-              type: string
-              example: "https://randomuser.me/api/portraits/thumb/women/55.jpg"
-        nat:
-          type: string
-          example: "IE"
-
-    ApiResponse:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        type:
-          type: string
         message:
           type: string
+          example: "Action successful"
