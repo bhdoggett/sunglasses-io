@@ -16,10 +16,21 @@ const users = require("../initial-data/users.json");
 const brands = require("../initial-data/brands.json");
 const products = require("../initial-data/products.json");
 
-// initalize variable for storing user acess token upon login
+// Initalize variable for storing user acess token upon login
 const validatedUsers = [];
 const TOKEN_VALIDITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
-// Error handling
+
+// Helper for authentication
+function authenticated(request) {
+  const authToken = request.headers["x-authentication"];
+  const currentValidatedUser = validatedUsers.find(
+    (user) => user.token === authToken
+  );
+  const elapsedTime = new Date() - currentValidatedUser?.lastUpdated;
+  const isValidToken = elapsedTime < TOKEN_VALIDITY_TIMEOUT;
+  return { isValidToken, currentValidatedUser };
+}
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Something broke!");
@@ -126,16 +137,7 @@ app.post("/api/me/cart/:itemId", (request, response) => {
     return response.status(404).json({ message: "Invalid product id" });
   }
 
-  const authToken = request.headers["x-authentication"];
-
-  const currentValidatedUser = validatedUsers.find(
-    (user) => user.token === authToken
-  );
-
-  const isValidToken =
-    currentValidatedUser &&
-    new Date() - currentValidatedUser.lastUpdated < TOKEN_VALIDITY_TIMEOUT;
-
+  const { currentValidatedUser, isValidToken } = authenticated(request);
   if (!isValidToken) {
     return response.status(401).json({
       message: "Login requried to add items to cart",
@@ -162,14 +164,7 @@ app.delete("/api/me/cart/:itemId", (request, response) => {
     return response.status(404).json({ message: "Invalid product id" });
   }
 
-  const authToken = request.headers["x-authentication"];
-
-  const currentValidatedUser = validatedUsers.find(
-    (user) => user.token === authToken
-  );
-
-  const elapsedTime = new Date() - currentValidatedUser?.lastUpdated;
-  const isValidToken = elapsedTime < TOKEN_VALIDITY_TIMEOUT;
+  const { currentValidatedUser, isValidToken } = authenticated(request);
 
   if (!isValidToken) {
     return response.status(401).json({
@@ -199,14 +194,7 @@ app.delete("/api/me/cart/:itemId", (request, response) => {
 });
 
 app.get("/api/me/cart", (request, response) => {
-  const authToken = request.headers["x-authentication"];
-
-  const currentValidatedUser = validatedUsers.find(
-    (user) => user.token === authToken
-  );
-
-  const elapsedTime = new Date() - currentValidatedUser?.lastUpdated;
-  const isValidToken = elapsedTime < TOKEN_VALIDITY_TIMEOUT;
+  const { currentValidatedUser, isValidToken } = authenticated(request);
 
   if (!isValidToken) {
     return response.status(401).json({
