@@ -21,7 +21,7 @@ const validatedUsers = [];
 const TOKEN_VALIDITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 
 // Helper for authentication
-function authenticated(request) {
+const authenticate = (request) => {
   const authToken = request.headers["x-authentication"];
   const currentValidatedUser = validatedUsers.find(
     (user) => user.token === authToken
@@ -29,7 +29,7 @@ function authenticated(request) {
   const elapsedTime = new Date() - currentValidatedUser?.lastUpdated;
   const isValidToken = elapsedTime < TOKEN_VALIDITY_TIMEOUT;
   return { isValidToken, currentValidatedUser };
-}
+};
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -137,7 +137,7 @@ app.post("/api/me/cart/:itemId", (request, response) => {
     return response.status(404).json({ message: "Invalid product id" });
   }
 
-  const { currentValidatedUser, isValidToken } = authenticated(request);
+  const { currentValidatedUser, isValidToken } = authenticate(request);
   if (!isValidToken) {
     return response.status(401).json({
       message: "Login requried to add items to cart",
@@ -164,7 +164,7 @@ app.delete("/api/me/cart/:itemId", (request, response) => {
     return response.status(404).json({ message: "Invalid product id" });
   }
 
-  const { currentValidatedUser, isValidToken } = authenticated(request);
+  const { currentValidatedUser, isValidToken } = authenticate(request);
 
   if (!isValidToken) {
     return response.status(401).json({
@@ -194,7 +194,7 @@ app.delete("/api/me/cart/:itemId", (request, response) => {
 });
 
 app.get("/api/me/cart", (request, response) => {
-  const { currentValidatedUser, isValidToken } = authenticated(request);
+  const { currentValidatedUser, isValidToken } = authenticate(request);
 
   if (!isValidToken) {
     return response.status(401).json({
