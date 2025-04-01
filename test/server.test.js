@@ -65,7 +65,7 @@ describe("Brands", () => {
         .end((err, res) => {
           res.status.should.equal(200);
           res.body.should.be.an("array");
-          res.body.length.should.be.above(0);
+          res.body[0].name.should.equal("Superglasses");
           done();
         });
     });
@@ -105,8 +105,7 @@ describe("Brands", () => {
         .get(`/api/sunglasses/search?search=${search}`)
         .end((err, res) => {
           res.status.should.equal(200);
-          res.body.should.be.an("array");
-          res.body.length.should.be.above(0);
+          res.body[0].name.should.equal("Black Sunglasses");
           done();
         });
     });

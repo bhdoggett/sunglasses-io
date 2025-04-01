@@ -31,6 +31,9 @@ const authenticate = (request) => {
   return { isValidToken, currentValidatedUser };
 };
 
+// Helper function to identify the correct user
+const findUser = (email) => users.find((user) => user.email === email);
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Something broke!");
@@ -129,6 +132,14 @@ app.get("/api/sunglasses/search", (request, response) => {
 });
 
 app.post("/api/me/cart/:itemId", (request, response) => {
+  const { currentValidatedUser, isValidToken } = authenticate(request);
+
+  if (!isValidToken) {
+    return response.status(401).json({
+      message: "Login requried to add items to cart",
+    });
+  }
+
   const product = products.find(
     (product) => product.id === request.params.itemId
   );
@@ -137,25 +148,17 @@ app.post("/api/me/cart/:itemId", (request, response) => {
     return response.status(404).json({ message: "Invalid product id" });
   }
 
-  const { currentValidatedUser, isValidToken } = authenticate(request);
-  if (!isValidToken) {
-    return response.status(401).json({
-      message: "Login requried to add items to cart",
-    });
-  }
+  const user = findUser(currentValidatedUser.email);
+  user.cart.push(product);
 
-  for (let i = 0; i < users.length; i++) {
-    if (users[i].email === currentValidatedUser.email) {
-      users[i].cart.push(product);
-      break;
-    }
-  }
   return response
     .status(200)
     .json({ message: `Item ${product.id} added to cart` });
 });
 
 app.delete("/api/me/cart/:itemId", (request, response) => {
+  const { currentValidatedUser, isValidToken } = authenticate(request);
+
   const idToRemove = request.params.itemId;
 
   const product = products.find((product) => product.id === idToRemove);
@@ -164,33 +167,24 @@ app.delete("/api/me/cart/:itemId", (request, response) => {
     return response.status(404).json({ message: "Invalid product id" });
   }
 
-  const { currentValidatedUser, isValidToken } = authenticate(request);
-
   if (!isValidToken) {
     return response.status(401).json({
       message: "Login requried to delete items from cart",
     });
   }
 
-  for (let i = 0; i < users.length; i++) {
-    if (users[i].email === currentValidatedUser.email) {
-      const productIndex = users[i].cart.findIndex(
-        (item) => item.id === product.id
-      );
+  const user = findUser(currentValidatedUser.email);
+  console.log("user", user);
+  const productIndex = user.cart.findIndex((item) => item.id === product.id);
 
-      if (productIndex === -1) {
-        return response
-          .status(404)
-          .json({ message: "Product not found in cart" });
-      }
-
-      users[i].cart.splice(productIndex, 1);
-
-      return response.status(200).json({
-        message: `Item with product id ${product.id} deleted from cart`,
-      });
-    }
+  if (productIndex === -1) {
+    return response.status(404).json({ message: "Product not found in cart" });
   }
+
+  user.cart.splice(productIndex, 1);
+  return response.status(200).json({
+    message: `Item with product id ${product.id} deleted from cart`,
+  });
 });
 
 app.get("/api/me/cart", (request, response) => {
@@ -202,11 +196,8 @@ app.get("/api/me/cart", (request, response) => {
     });
   }
 
-  for (let i = 0; i < users.length; i++) {
-    if (users[i].email === currentValidatedUser.email) {
-      return response.status(200).json(users[i].cart);
-    }
-  }
+  const user = findUser(currentValidatedUser.email);
+  return response.status(200).json(user.cart);
 });
 
 module.exports = app;
